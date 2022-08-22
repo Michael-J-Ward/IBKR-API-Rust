@@ -1,3 +1,10 @@
+
+
+# Cleaning Up
+- [ ] Remove `#![allow(unused_imports)]` in src/examples/test_helpers.rs
+- [ ] Remove `#![allow(clippy::too_many_arguments)]`
+- [ ] Remove `#![allow(clippy::field_reassign_with_default)]`
+
 # IBKR-API-Rust
 
 Port of Interactive Broker's trading API written in Rust (API_Version=9.76.01)

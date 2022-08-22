@@ -86,7 +86,7 @@ pub fn decode_f64_show_unset(iter: &mut Iter<String>) -> Result<f64, IBKRApiLibE
 pub fn decode_string(iter: &mut Iter<String>) -> Result<String, IBKRApiLibError> {
     let next = iter.next();
     //info!("{:?}", next);
-    let val = next.unwrap().parse().unwrap_or("".to_string());
+    let val = next.unwrap().parse().unwrap_or_else(|_| "".to_string());
     Ok(val)
 }
 
@@ -118,7 +118,7 @@ where
     ) -> Self {
         Decoder {
             wrapper: the_wrapper,
-            msg_queue: msg_queue,
+            msg_queue,
             server_version,
             conn_state,
         }
@@ -920,7 +920,7 @@ where
             execution.ev_rule = decode_string(&mut fields_itr)?;
 
             let tmp_ev_mult = (&mut fields_itr).peekable().peek().unwrap().as_str();
-            if tmp_ev_mult != "" {
+            if !tmp_ev_mult.is_empty() {
                 execution.ev_multiplier = decode_f64(&mut fields_itr)?;
             } else {
                 execution.ev_multiplier = 1.0;
@@ -1577,20 +1577,17 @@ where
 
         let status = decode_string(&mut fields_itr)?;
 
-        let filled;
-        if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
-            filled = decode_f64(&mut fields_itr)?;
+        let filled = if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
+            decode_f64(&mut fields_itr)?
         } else {
-            filled = decode_i32(&mut fields_itr)? as f64;
-        }
+            decode_i32(&mut fields_itr)? as f64
+        };
 
-        let remaining;
-
-        if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
-            remaining = decode_f64(&mut fields_itr)?;
+        let remaining = if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
+            decode_f64(&mut fields_itr)?
         } else {
-            remaining = decode_i32(&mut fields_itr)? as f64;
-        }
+            decode_i32(&mut fields_itr)? as f64
+        };
 
         let avg_fill_price = decode_f64(&mut fields_itr)?;
 
@@ -1712,12 +1709,11 @@ where
             contract.trading_class = decode_string(&mut fields_itr)?;
         }
 
-        let position;
-        if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
-            position = decode_f64(&mut fields_itr)?;
+        let position = if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
+            decode_f64(&mut fields_itr)?
         } else {
-            position = decode_i32(&mut fields_itr)? as f64;
-        }
+            decode_i32(&mut fields_itr)? as f64
+        };
 
         let market_price = decode_f64(&mut fields_itr)?;
         let market_value = decode_f64(&mut fields_itr)?;
@@ -1774,12 +1770,11 @@ where
             contract.trading_class = decode_string(&mut fields_itr)?;
         }
 
-        let position;
-        if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
-            position = decode_f64(&mut fields_itr)?;
+        let position = if self.server_version >= MIN_SERVER_VER_FRACTIONAL_POSITIONS {
+            decode_f64(&mut fields_itr)?
         } else {
-            position = decode_i32(&mut fields_itr)? as f64;
-        }
+            decode_i32(&mut fields_itr)? as f64
+        };
 
         let mut avg_cost = 0.0;
         if version >= 3 {
@@ -2571,21 +2566,21 @@ where
         is_bond: bool,
         read_date: &str,
     ) -> Result<(), IBKRApiLibError> {
-        if read_date != "" {
+        if !read_date.is_empty() {
             let splitted = read_date.split_whitespace().collect::<Vec<&str>>();
-            if splitted.len() > 0 {
+            if !splitted.is_empty() {
                 if is_bond {
-                    contract.maturity = splitted.get(0).unwrap_or_else(|| &"").to_string();
+                    contract.maturity = splitted.first().unwrap_or(&"").to_string();
                 } else {
                     contract.contract.last_trade_date_or_contract_month =
-                        splitted.get(0).unwrap_or_else(|| &"").to_string();
+                        splitted.first().unwrap_or(&"").to_string();
                 }
             }
             if splitted.len() > 1 {
-                contract.last_trade_time = splitted.get(1).unwrap_or_else(|| &"").to_string();
+                contract.last_trade_time = splitted.get(1).unwrap_or(&"").to_string();
             }
             if is_bond && splitted.len() > 2 {
-                contract.time_zone_id = splitted.get(2).unwrap_or_else(|| &"").to_string();
+                contract.time_zone_id = splitted.get(2).unwrap_or(&"").to_string();
             }
         }
         Ok(())

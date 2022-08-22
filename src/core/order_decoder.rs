@@ -556,7 +556,7 @@ impl<'a> OrderDecoder<'a> {
         self.order.delta_neutral_order_type = decode_string(fields_iter)?;
         self.order.delta_neutral_aux_price = decode_f64_show_unset(fields_iter)?;
 
-        if self.version >= 27 && self.order.delta_neutral_order_type != "" {
+        if self.version >= 27 && !self.order.delta_neutral_order_type.is_empty() {
             self.order.delta_neutral_con_id = decode_i32(fields_iter)?;
             if read_open_order_attribs {
                 self.order.delta_neutral_settling_firm = decode_string(fields_iter)?;
@@ -565,7 +565,7 @@ impl<'a> OrderDecoder<'a> {
             }
         }
 
-        if self.version >= 31 && self.order.delta_neutral_order_type != "" {
+        if self.version >= 31 && !self.order.delta_neutral_order_type.is_empty() {
             if read_open_order_attribs {
                 self.order.delta_neutral_open_close = decode_string(fields_iter)?;
             }
@@ -694,7 +694,7 @@ impl<'a> OrderDecoder<'a> {
         if self.version >= 24 {
             self.order.hedge_type = decode_string(fields_iter)?;
         }
-        if self.order.hedge_type != "" {
+        if !self.order.hedge_type.is_empty() {
             self.order.hedge_param = decode_string(fields_iter)?;
         }
         Ok(())
@@ -760,7 +760,7 @@ impl<'a> OrderDecoder<'a> {
     ) -> Result<(), IBKRApiLibError> {
         if self.version >= 21 {
             self.order.algo_strategy = decode_string(fields_iter)?;
-            if self.order.algo_strategy != "" {
+            if !self.order.algo_strategy.is_empty() {
                 let algo_params_count = decode_i32(fields_iter)?;
                 if algo_params_count > 0 {
                     self.order.algo_params = vec![];
@@ -838,14 +838,14 @@ impl<'a> OrderDecoder<'a> {
         &mut self,
         fields_iter: &mut Iter<String>,
     ) -> Result<(), IBKRApiLibError> {
-        if self.server_version >= MIN_SERVER_VER_PEGGED_TO_BENCHMARK {
-            if self.order.order_type == "PEG BENCH" {
-                self.order.reference_contract_id = decode_i32(fields_iter)?;
-                self.order.is_pegged_change_amount_decrease = decode_bool(fields_iter)?;
-                self.order.pegged_change_amount = decode_f64(fields_iter)?;
-                self.order.reference_change_amount = decode_f64(fields_iter)?;
-                self.order.reference_exchange_id = decode_string(fields_iter)?;
-            }
+        if self.server_version >= MIN_SERVER_VER_PEGGED_TO_BENCHMARK
+            && self.order.order_type == "PEG BENCH"
+        {
+            self.order.reference_contract_id = decode_i32(fields_iter)?;
+            self.order.is_pegged_change_amount_decrease = decode_bool(fields_iter)?;
+            self.order.pegged_change_amount = decode_f64(fields_iter)?;
+            self.order.reference_change_amount = decode_f64(fields_iter)?;
+            self.order.reference_exchange_id = decode_string(fields_iter)?;
         }
         Ok(())
     }
